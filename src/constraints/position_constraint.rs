@@ -21,7 +21,7 @@ pub trait PositionConstraint: XpbdConstraint<2> {
         }
 
         // Compute positional impulse
-        let p = delta_lagrange * direction;
+        let p = delta_lagrange * direction * 0.01;
         let rot1 = *body1.rotation;
         let rot2 = *body2.rotation;
 
