@@ -241,6 +241,78 @@ fn penetration_constraints(
     }
 }
 
+
+/// Iterates through the constraints of a given type and solves them. Sleeping bodies are woken up when
+/// active bodies interact with them in a constraint.
+///
+/// Note that this system only works for constraints that are modeled as entities.
+/// If you store constraints in a resource, you must create your own system for solving them.
+///
+/// ## User constraints
+///
+/// To create a new constraint, implement [`XpbdConstraint`] for a component, get the [`SubstepSchedule`] and add this system into
+/// the [`SubstepSet::SolveUserConstraints`] set.
+/// You must provide the number of entities in the constraint using generics.
+///
+/// It should look something like this:
+///
+/// ```ignore
+/// let substeps = app
+///     .get_schedule_mut(SubstepSchedule)
+///     .expect("add SubstepSchedule first");
+///
+/// substeps.add_systems(
+///     solve_constraint::<YourConstraint, ENTITY_COUNT>
+///         .in_set(SubstepSet::SolveUserConstraints),
+/// );
+/// ```
+pub fn solve_constraint<C: XpbdConstraint<ENTITY_COUNT> + Component, const ENTITY_COUNT: usize>(
+    mut commands: Commands,
+    mut bodies: Query<(RigidBodyQuery, Option<&Sleeping>)>,
+    mut constraints: Query<&mut C, Without<RigidBody>>,
+    time: Res<Time>,
+) {
+    let delta_secs = time.delta_seconds_adjusted();
+
+    // Clear Lagrange multipliers
+    constraints
+        .iter_mut()
+        .for_each(|mut c| c.clear_lagrange_multipliers());
+
+    for mut constraint in &mut constraints {
+        // Get components for entities
+        if let Ok(mut bodies) = bodies.get_many_mut(constraint.entities()) {
+            let none_dynamic = bodies.iter().all(|(body, _)| !body.rb.is_dynamic());
+            let all_inactive = bodies
+                .iter()
+                .all(|(body, sleeping)| body.rb.is_static() || sleeping.is_some());
+
+            // No constraint solving if none of the bodies is dynamic,
+            // or if all of the bodies are either static or sleeping
+            if none_dynamic || all_inactive {
+                continue;
+            }
+
+            // At least one of the participating bodies is active, so wake up any sleeping bodies
+            for (body, sleeping) in &bodies {
+                if sleeping.is_some() {
+                    commands.entity(body.entity).remove::<Sleeping>();
+                }
+            }
+
+            // Get the bodies as an array and solve the constraint
+            if let Ok(bodies) = bodies
+                .iter_mut()
+                .map(|(ref mut body, _)| body)
+                .collect::<Vec<&mut RigidBodyQueryItem>>()
+                .try_into()
+            {
+                constraint.solve(bodies, delta_secs);
+            }
+        }
+    }
+}
+
 /// Updates the linear velocity of all dynamic bodies based on the change in position from the previous step.
 #[allow(clippy::type_complexity)]
 fn update_lin_vel(
