@@ -72,7 +72,7 @@ impl Plugin for SolverPlugin {
 
         //substeps.add_systems(store_contact_impulses.in_set(SubstepSet::StoreImpulses));
 
-        //substeps.add_systems(apply_translation.in_set(SubstepSet::ApplyTranslation));
+        substeps.add_systems(apply_translation.in_set(SubstepSet::ApplyTranslation));
     }
 }
 
@@ -580,7 +580,7 @@ fn apply_translation(
 
         // We must also account for the translation caused by rotations around the center of mass,
         // as it may be offset from `Position`.
-        pos.0 += get_pos_translation(&translation, prev_rot, rot, center_of_mass);
+       // pos.0 += get_pos_translation(&translation, prev_rot, rot, center_of_mass);
         translation.0 = Vector::ZERO;
     }
 }
