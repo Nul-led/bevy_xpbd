@@ -580,7 +580,7 @@ fn apply_translation(
 
         // We must also account for the translation caused by rotations around the center of mass,
         // as it may be offset from `Position`.
-       // pos.0 += get_pos_translation(&translation, prev_rot, rot, center_of_mass);
+        pos.0 += get_pos_translation(&translation, prev_rot, rot, center_of_mass);
         translation.0 = Vector::ZERO;
     }
 }
