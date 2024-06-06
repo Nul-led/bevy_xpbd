@@ -70,7 +70,7 @@ impl Plugin for SolverPlugin {
                 .in_set(SubstepSet::SolveVelocities),
         );
 
-        //substeps.add_systems(store_contact_impulses.in_set(SubstepSet::StoreImpulses));
+        substeps.add_systems(store_contact_impulses.in_set(SubstepSet::StoreImpulses));
 
         substeps.add_systems(apply_translation.in_set(SubstepSet::ApplyTranslation));
     }
