@@ -55,7 +55,7 @@ impl Plugin for SolverPlugin {
                 .in_set(SubstepSet::SolveConstraints),
         );
 
-        //substeps.add_systems((update_lin_vel, update_ang_vel).in_set(SubstepSet::UpdateVelocities));
+        substeps.add_systems((update_lin_vel/*, update_ang_vel*/).in_set(SubstepSet::UpdateVelocities));
 
         substeps.add_systems(
             (
