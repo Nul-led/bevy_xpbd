@@ -32,8 +32,8 @@ pub trait PositionConstraint: XpbdConstraint<2> {
 
         // Apply positional and rotational updates
         if body1.rb.is_dynamic() && body1.dominance() <= body2.dominance() {
-            body1.accumulated_translation.0 += p * inv_mass1;//direction * (body1.restitution.coefficient * body2.mass.0); // 
-            *body1.rotation += Self::get_delta_rot(rot1, inv_inertia1, r1, p);
+            body1.accumulated_translation.0 += direction * (body1.restitution.coefficient * body2.mass.0); // p * inv_mass1;//
+            //*body1.rotation += Self::get_delta_rot(rot1, inv_inertia1, r1, p);
 
             #[cfg(feature = "3d")]
             {
@@ -46,8 +46,8 @@ pub trait PositionConstraint: XpbdConstraint<2> {
         }
         
         if body2.rb.is_dynamic() && body2.dominance() <= body1.dominance() {
-            body2.accumulated_translation.0 -= p * inv_mass2;//direction * (body2.restitution.coefficient * body1.mass.0); //
-            *body2.rotation -= Self::get_delta_rot(rot2, inv_inertia2, r2, p);
+            body2.accumulated_translation.0 -= direction * (body2.restitution.coefficient * body1.mass.0); // p * inv_mass2;//
+            //*body2.rotation -= Self::get_delta_rot(rot2, inv_inertia2, r2, p);
 
             #[cfg(feature = "3d")]
             {
