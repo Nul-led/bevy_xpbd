@@ -55,7 +55,7 @@ impl Plugin for SolverPlugin {
                 .in_set(SubstepSet::SolveConstraints),
         );
 
-        substeps.add_systems((update_lin_vel/*, update_ang_vel*/).in_set(SubstepSet::UpdateVelocities));
+        //substeps.add_systems((update_lin_vel/*, update_ang_vel*/).in_set(SubstepSet::UpdateVelocities));
 
         substeps.add_systems(
             (
@@ -207,12 +207,8 @@ fn penetration_constraints(
                     body1.accumulated_translation.0 += Vec2::from_angle(penetration_angle) * (body1.restitution.coefficient * body2.density.0);
                     body2.accumulated_translation.0 -= Vec2::from_angle(penetration_angle) * (body2.restitution.coefficient * body1.density.0);
 
-                    // Set collision as penetrating for this frame and substep.
-                    // This is used for detecting when the collision has started or ended.
-                    if penetration_depth > Scalar::EPSILON {
-                        contacts.during_current_frame = true;
-                        contacts.during_current_substep = true;
-                    }
+                    contacts.during_current_frame = true;
+                    contacts.during_current_substep = true;
                 }
             }
 
