@@ -56,7 +56,7 @@ impl XpbdConstraint<2> for PenetrationConstraint {
 
         let p1 = body1.current_position() + body1.rotation.rotate(self.contact.point1);
         let p2 = body2.current_position() + body2.rotation.rotate(self.contact.point2);
-        self.contact.penetration = (p1 - p2).dot(self.contact.global_normal1(&body1.rotation));
+        self.contact.penetration = (p1 - p2).dot(self.contact.global_normal1(&body1.rotation)) * 0.01;
 
         // If penetration depth is under 0, skip the collision
         if self.contact.penetration <= Scalar::EPSILON {
@@ -64,7 +64,7 @@ impl XpbdConstraint<2> for PenetrationConstraint {
         }
 
         self.solve_contact(body1, body2, dt);
-        self.solve_friction(body1, body2, dt);
+        //self.solve_friction(body1, body2, dt);
     }
 }
 
