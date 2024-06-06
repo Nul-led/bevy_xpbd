@@ -45,11 +45,11 @@ impl Plugin for SolverPlugin {
         substeps.add_systems(
             (
                 penetration_constraints,
-                solve_constraint::<FixedJoint, 2>,
-                solve_constraint::<RevoluteJoint, 2>,
-                solve_constraint::<SphericalJoint, 2>,
-                solve_constraint::<PrismaticJoint, 2>,
-                solve_constraint::<DistanceJoint, 2>,
+                //solve_constraint::<FixedJoint, 2>,
+                //solve_constraint::<RevoluteJoint, 2>,
+                //solve_constraint::<SphericalJoint, 2>,
+                //solve_constraint::<PrismaticJoint, 2>,
+                //solve_constraint::<DistanceJoint, 2>,
             )
                 .chain()
                 .in_set(SubstepSet::SolveConstraints),
@@ -60,11 +60,11 @@ impl Plugin for SolverPlugin {
         substeps.add_systems(
             (
                 solve_vel,
-                joint_damping::<FixedJoint>,
-                joint_damping::<RevoluteJoint>,
-                joint_damping::<SphericalJoint>,
-                joint_damping::<PrismaticJoint>,
-                joint_damping::<DistanceJoint>,
+                //joint_damping::<FixedJoint>,
+                //joint_damping::<RevoluteJoint>,
+                //joint_damping::<SphericalJoint>,
+                //joint_damping::<PrismaticJoint>,
+                //joint_damping::<DistanceJoint>,
             )
                 .chain()
                 .in_set(SubstepSet::SolveVelocities),
