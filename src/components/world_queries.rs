@@ -28,6 +28,7 @@ pub struct RigidBodyQuery {
     pub restitution: &'static Restitution,
     pub locked_axes: Option<&'static LockedAxes>,
     pub dominance: Option<&'static Dominance>,
+    pub density: &'static ColliderDensity,
 }
 
 impl<'w> RigidBodyQueryItem<'w> {
