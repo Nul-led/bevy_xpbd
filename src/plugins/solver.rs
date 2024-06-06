@@ -194,24 +194,22 @@ fn penetration_constraints(
                         ..*contact
                     };
 
-                    let mut constraint = PenetrationConstraint {
-                        friction,
-                        restitution,
-                        ..PenetrationConstraint::new(
-                            &body1,
-                            &body2,
-                            *collider_entity1,
-                            *collider_entity2,
-                            contact,
-                            manifold_index,
-                        )
-                    };
-                    constraint.solve([&mut body1, &mut body2], delta_secs);
-                    penetration_constraints.0.push(constraint);
+                    let p1 = body1.current_position() + body1.rotation.rotate(self.contact.point1);
+                    let p2 = body2.current_position() + body2.rotation.rotate(self.contact.point2);
+                    let penetration = p1 - p2;
+                    let penetration_depth = penetration.dot(contact.global_normal1(&body1.rotation));
+
+                    if penetration_depth <= Scalar::EPSILON {
+                        return;
+                    }
+
+                    let penetration_angle = penetration.to_angle();
+                    body1.accumulated_translation += Vec2::from_angle(penetration_angle) * penetration_depth;
+                    body2.accumulated_translation -= Vec2::from_angle(penetration_angle) * penetration_depth;
 
                     // Set collision as penetrating for this frame and substep.
                     // This is used for detecting when the collision has started or ended.
-                    if contact.penetration > Scalar::EPSILON {
+                    if penetration_depth > Scalar::EPSILON {
                         contacts.during_current_frame = true;
                         contacts.during_current_substep = true;
                     }
@@ -238,77 +236,6 @@ fn penetration_constraints(
                 );
                 debug!("{} is at {}", debug_id1, body1.position.0);
                 debug!("{} is at {}", debug_id2, body2.position.0);
-            }
-        }
-    }
-}
-
-/// Iterates through the constraints of a given type and solves them. Sleeping bodies are woken up when
-/// active bodies interact with them in a constraint.
-///
-/// Note that this system only works for constraints that are modeled as entities.
-/// If you store constraints in a resource, you must create your own system for solving them.
-///
-/// ## User constraints
-///
-/// To create a new constraint, implement [`XpbdConstraint`] for a component, get the [`SubstepSchedule`] and add this system into
-/// the [`SubstepSet::SolveUserConstraints`] set.
-/// You must provide the number of entities in the constraint using generics.
-///
-/// It should look something like this:
-///
-/// ```ignore
-/// let substeps = app
-///     .get_schedule_mut(SubstepSchedule)
-///     .expect("add SubstepSchedule first");
-///
-/// substeps.add_systems(
-///     solve_constraint::<YourConstraint, ENTITY_COUNT>
-///         .in_set(SubstepSet::SolveUserConstraints),
-/// );
-/// ```
-pub fn solve_constraint<C: XpbdConstraint<ENTITY_COUNT> + Component, const ENTITY_COUNT: usize>(
-    mut commands: Commands,
-    mut bodies: Query<(RigidBodyQuery, Option<&Sleeping>)>,
-    mut constraints: Query<&mut C, Without<RigidBody>>,
-    time: Res<Time>,
-) {
-    let delta_secs = time.delta_seconds_adjusted();
-
-    // Clear Lagrange multipliers
-    constraints
-        .iter_mut()
-        .for_each(|mut c| c.clear_lagrange_multipliers());
-
-    for mut constraint in &mut constraints {
-        // Get components for entities
-        if let Ok(mut bodies) = bodies.get_many_mut(constraint.entities()) {
-            let none_dynamic = bodies.iter().all(|(body, _)| !body.rb.is_dynamic());
-            let all_inactive = bodies
-                .iter()
-                .all(|(body, sleeping)| body.rb.is_static() || sleeping.is_some());
-
-            // No constraint solving if none of the bodies is dynamic,
-            // or if all of the bodies are either static or sleeping
-            if none_dynamic || all_inactive {
-                continue;
-            }
-
-            // At least one of the participating bodies is active, so wake up any sleeping bodies
-            for (body, sleeping) in &bodies {
-                if sleeping.is_some() {
-                    commands.entity(body.entity).remove::<Sleeping>();
-                }
-            }
-
-            // Get the bodies as an array and solve the constraint
-            if let Ok(bodies) = bodies
-                .iter_mut()
-                .map(|(ref mut body, _)| body)
-                .collect::<Vec<&mut RigidBodyQueryItem>>()
-                .try_into()
-            {
-                constraint.solve(bodies, delta_secs);
             }
         }
     }
@@ -535,64 +462,6 @@ fn solve_vel(
                 if delta_ang_vel != AngularVelocity::ZERO.0 {
                     body2.angular_velocity.0 -= delta_ang_vel;
                 }
-            }
-        }
-    }
-}
-
-/// Applies velocity corrections caused by joint damping.
-#[allow(clippy::type_complexity)]
-pub fn joint_damping<T: Joint>(
-    mut bodies: Query<
-        (
-            &RigidBody,
-            &mut LinearVelocity,
-            &mut AngularVelocity,
-            &InverseMass,
-            Option<&Dominance>,
-        ),
-        Without<Sleeping>,
-    >,
-    joints: Query<&T, Without<RigidBody>>,
-    time: Res<Time>,
-) {
-    let delta_secs = time.delta_seconds_adjusted();
-
-    for joint in &joints {
-        if let Ok(
-            [(rb1, mut lin_vel1, mut ang_vel1, inv_mass1, dominance1), (rb2, mut lin_vel2, mut ang_vel2, inv_mass2, dominance2)],
-        ) = bodies.get_many_mut(joint.entities())
-        {
-            let delta_omega =
-                (ang_vel2.0 - ang_vel1.0) * (joint.damping_angular() * delta_secs).min(1.0);
-
-            if rb1.is_dynamic() {
-                ang_vel1.0 += delta_omega;
-            }
-            if rb2.is_dynamic() {
-                ang_vel2.0 -= delta_omega;
-            }
-
-            let delta_v =
-                (lin_vel2.0 - lin_vel1.0) * (joint.damping_linear() * delta_secs).min(1.0);
-
-            let w1 = if rb1.is_dynamic() { inv_mass1.0 } else { 0.0 };
-            let w2 = if rb2.is_dynamic() { inv_mass2.0 } else { 0.0 };
-
-            if w1 + w2 <= Scalar::EPSILON {
-                continue;
-            }
-
-            let p = delta_v / (w1 + w2);
-
-            let dominance1 = dominance1.map_or(0, |dominance| dominance.0);
-            let dominance2 = dominance2.map_or(0, |dominance| dominance.0);
-
-            if rb1.is_dynamic() && (!rb2.is_dynamic() || dominance1 <= dominance2) {
-                lin_vel1.0 += p * inv_mass1.0;
-            }
-            if rb2.is_dynamic() && (!rb1.is_dynamic() || dominance2 <= dominance1) {
-                lin_vel2.0 -= p * inv_mass2.0;
             }
         }
     }
