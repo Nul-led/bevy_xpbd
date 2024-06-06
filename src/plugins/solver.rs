@@ -337,7 +337,7 @@ fn update_lin_vel(
 
         if rb.is_dynamic() {
             // v = (x - x_prev) / h
-            let new_lin_vel = (pos.0 - prev_pos.0 + translation.0);// / delta_secs;
+            let new_lin_vel = (pos.0 - prev_pos.0 + translation.0) / delta_secs;
             // avoid triggering bevy's change detection unnecessarily
             if new_lin_vel != lin_vel.0 && new_lin_vel.is_finite() {
                 lin_vel.0 = new_lin_vel;
