@@ -204,8 +204,8 @@ fn penetration_constraints(
                     }
 
                     let penetration_angle = penetration.to_angle();
-                    body1.accumulated_translation.0 += Vec2::from_angle(penetration_angle);
-                    body2.accumulated_translation.0 -= Vec2::from_angle(penetration_angle);
+                    body1.accumulated_translation.0 += Vec2::from_angle(penetration_angle) * (body1.restitution.coefficient * body2.density.0);
+                    body2.accumulated_translation.0 += Vec2::from_angle(penetration_angle) * (body2.restitution.coefficient * body1.density.0);
 
                     // Set collision as penetrating for this frame and substep.
                     // This is used for detecting when the collision has started or ended.
