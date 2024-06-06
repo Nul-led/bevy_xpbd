@@ -57,7 +57,7 @@ impl Plugin for SolverPlugin {
 
         //substeps.add_systems((update_lin_vel/*, update_ang_vel*/).in_set(SubstepSet::UpdateVelocities));
 
-        substeps.add_systems(
+        /*substeps.add_systems(
             (
                 solve_vel,
                 //joint_damping::<FixedJoint>,
@@ -68,11 +68,11 @@ impl Plugin for SolverPlugin {
             )
                 .chain()
                 .in_set(SubstepSet::SolveVelocities),
-        );
+        );*/
 
-        substeps.add_systems(store_contact_impulses.in_set(SubstepSet::StoreImpulses));
+        //substeps.add_systems(store_contact_impulses.in_set(SubstepSet::StoreImpulses));
 
-        substeps.add_systems(apply_translation.in_set(SubstepSet::ApplyTranslation));
+        //substeps.add_systems(apply_translation.in_set(SubstepSet::ApplyTranslation));
     }
 }
 
@@ -337,7 +337,7 @@ fn update_lin_vel(
 
         if rb.is_dynamic() {
             // v = (x - x_prev) / h
-            let new_lin_vel = (pos.0 - prev_pos.0 + translation.0) / delta_secs;
+            let new_lin_vel = (pos.0 - prev_pos.0 + translation.0);// / delta_secs;
             // avoid triggering bevy's change detection unnecessarily
             if new_lin_vel != lin_vel.0 && new_lin_vel.is_finite() {
                 lin_vel.0 = new_lin_vel;
