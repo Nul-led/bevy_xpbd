@@ -15,6 +15,8 @@ pub trait AngularConstraint: XpbdConstraint<2> {
         delta_lagrange: Scalar,
         axis: Vector3,
     ) -> Scalar {
+        0.0
+        /*
         if delta_lagrange.abs() <= Scalar::EPSILON {
             return 0.0;
         }
@@ -37,7 +39,7 @@ pub trait AngularConstraint: XpbdConstraint<2> {
             *body2.rotation -= Self::get_delta_rot(rot2, inv_inertia2, p);
         }
 
-        p
+        p*/
     }
 
     /// Applies angular constraints for interactions between two bodies.
