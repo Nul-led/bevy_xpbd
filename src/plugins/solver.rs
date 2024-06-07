@@ -206,6 +206,8 @@ fn penetration_constraints(
                     body1.accumulated_translation.0 += Vec2::from_angle(penetration_angle) * (body1.restitution.coefficient * body2.density.0);
                     body2.accumulated_translation.0 -= Vec2::from_angle(penetration_angle) * (body2.restitution.coefficient * body1.density.0);
 
+                    info!("{} {}", body1.accumulated_translation.0.length(), (body1.restitution.coefficient * body2.density.0));
+
                     contacts.during_current_frame = true;
                     contacts.during_current_substep = true;
                 }
