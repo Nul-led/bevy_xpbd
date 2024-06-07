@@ -196,8 +196,7 @@ fn penetration_constraints(
 
                     let p1 = body1.current_position() + body1.rotation.rotate(contact.point1);
                     let p2 = body2.current_position() + body2.rotation.rotate(contact.point2);
-                    let penetration = p1 - p2;
-                    let penetration_depth = penetration.dot(contact.global_normal1(&body1.rotation));
+                    let penetration_depth = (p1 - p2).dot(contact.global_normal1(&body1.rotation));
 
                     if penetration_depth <= Scalar::EPSILON {
                         return;
