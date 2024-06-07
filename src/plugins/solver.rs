@@ -203,8 +203,8 @@ fn penetration_constraints(
                     }
 
                     let penetration_angle = (body1.current_position() - body2.current_position()).to_angle();
-                    body1.accumulated_translation.0 += Vec2::from_angle(penetration_angle) * (body1.restitution.coefficient * body2.density.0) * delta_secs;
-                    body2.accumulated_translation.0 -= Vec2::from_angle(penetration_angle) * (body2.restitution.coefficient * body1.density.0) * delta_secs;
+                    body1.accumulated_translation.0 += Vec2::from_angle(penetration_angle) * (body1.restitution.coefficient * body2.density.0 * delta_secs);
+                    body2.accumulated_translation.0 -= Vec2::from_angle(penetration_angle) * (body2.restitution.coefficient * body1.density.0 * delta_secs);
 
                     contacts.during_current_frame = true;
                     contacts.during_current_substep = true;
@@ -337,7 +337,6 @@ fn update_lin_vel(
         if rb.is_dynamic() {
             // v = (x - x_prev) / h
             let new_lin_vel = (pos.0 - prev_pos.0 + translation.0) / delta_secs;
-            info!("{} {} {} {} {}", lin_vel.0, new_lin_vel, pos.0, prev_pos.0, translation.0);
             // avoid triggering bevy's change detection unnecessarily
             if new_lin_vel != lin_vel.0 && new_lin_vel.is_finite() {
                 lin_vel.0 = new_lin_vel;
